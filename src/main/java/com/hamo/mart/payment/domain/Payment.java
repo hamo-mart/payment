@@ -19,11 +19,16 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "payment_key")
+    private String key;
 
+    @Enumerated(EnumType.STRING)
     private Type type;
 
+    @Enumerated(EnumType.STRING)
     private Method method;
 
+    @Enumerated(EnumType.STRING)
     private Status status;
 
     private String orderNumber;
@@ -36,7 +41,8 @@ public class Payment {
     private PaymentProvider paymentProvider;
 
     @Builder
-    public Payment(Type type, Method method, Status status, String orderNumber, ZonedDateTime approvedAt, Integer totalAmount, PaymentProvider paymentProvider) {
+    public Payment(String key, Type type, Method method, Status status, String orderNumber, ZonedDateTime approvedAt, Integer totalAmount, PaymentProvider paymentProvider) {
+        this.key = key;
         this.type = type;
         this.method = method;
         this.status = status;

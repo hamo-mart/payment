@@ -5,6 +5,7 @@ import com.hamo.mart.payment.dto.PaymentRegisterRequest;
 import com.hamo.mart.payment.dto.PaymentResponse;
 import com.hamo.mart.payment.repository.PaymentProviderRepository;
 import com.hamo.mart.payment.repository.PaymentRepository;
+import com.hamo.mart.payment.service.stategy.PaymentProcessor;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,7 +14,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import reactor.core.publisher.Mono;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -29,6 +32,10 @@ class PaymentServiceImplTest {
     @Mock
     private PaymentRepository paymentRepository;
 
+    @Mock
+    private PaymentProcessor paymentProcessor;
+
+
     @InjectMocks
     private PaymentServiceImpl paymentService;
 
@@ -40,37 +47,30 @@ class PaymentServiceImplTest {
 
         PaymentRegisterRequest request =
                 new PaymentRegisterRequest(
-                Type.CARD,
-                Method.CREDIT_CARD,
-                Status.READY,
-                "38831811234567",
-                1000,
-                1L
+                        "Toss",
+                        "38831811234567",
+                        "CARD",
+                        "CREDIT_CARD",
+                        1110
         );
 
         Payment payment = Payment
                 .builder()
-                .type(request.getType())
-                .method(request.getMethod())
-                .status(request.getStatus())
                 .orderNumber(request.getOrderNumber())
-                .totalAmount(request.getTotalAmount())
+                .totalAmount(request.getAmount())
                 .build();
         PaymentProvider paymentProvider = new PaymentProvider("KAKAO");
         ReflectionTestUtils.setField(paymentProvider, "id", 1L);
 
+        when(paymentProcessor.process(anyString(), any(PaymentRegisterRequest.class)))
+                .thenReturn(Mono.just(new PaymentResponse("APPROVED", Status.READY, ZonedDateTime.now())));
         when(paymentProviderRepository.findById(any())).thenReturn(Optional.of(paymentProvider));
         when(paymentRepository.save(any())).thenReturn(payment);
 
-        PaymentResponse paymentResponse = paymentService.processPayment(request);
+        PaymentResponse paymentResponse = paymentService.processPayment(request).block();
 
         assertNotNull(paymentResponse);
-        assertEquals(request.getOrderNumber(), paymentResponse.getOrderNumber());
-        assertEquals(request.getTotalAmount(), paymentResponse.getTotalAmount());
-        assertEquals(paymentProvider.getName(), paymentResponse.getPaymentProviderName());
-        assertEquals(request.getType(), paymentResponse.getType());
-        assertEquals(request.getMethod(), paymentResponse.getMethod());
-        assertEquals(request.getStatus(), paymentResponse.getStatus());
+
     }
 
     @Test
@@ -95,11 +95,6 @@ class PaymentServiceImplTest {
         PaymentResponse paymentResponse = paymentService.getPaymentDetails(paymentId);
 
         assertNotNull(paymentResponse);
-        assertEquals(payment.getOrderNumber(), paymentResponse.getOrderNumber());
-        assertEquals(payment.getTotalAmount(), paymentResponse.getTotalAmount());
-        assertEquals(paymentProvider.getName(), paymentResponse.getPaymentProviderName());
-        assertEquals(payment.getType(), paymentResponse.getType());
-        assertEquals(payment.getMethod(), paymentResponse.getMethod());
         assertEquals(payment.getStatus(), paymentResponse.getStatus());
     }
 
@@ -138,16 +133,7 @@ class PaymentServiceImplTest {
         var paymentResponses = paymentService.getPaymentsByOrderNumber(orderNumber, pageable);
         assertNotNull(paymentResponses);
         assertEquals(2, paymentResponses.getTotalElements());
-        assertEquals(1L, paymentResponses.getContent().get(0).getId());
-        assertEquals(2L, paymentResponses.getContent().get(1).getId());
-        assertEquals(orderNumber, paymentResponses.getContent().get(0).getOrderNumber());
-        assertEquals(orderNumber, paymentResponses.getContent().get(1).getOrderNumber());
-        assertEquals(paymentProvider.getName(), paymentResponses.getContent().get(0).getPaymentProviderName());
-        assertEquals(paymentProvider.getName(), paymentResponses.getContent().get(1).getPaymentProviderName());
-        assertEquals(payment1.getType(), paymentResponses.getContent().get(0).getType());
-        assertEquals(payment2.getType(), paymentResponses.getContent().get(1).getType());
-        assertEquals(payment1.getMethod(), paymentResponses.getContent().get(0).getMethod());
-        assertEquals(payment2.getMethod(), paymentResponses.getContent().get(1).getMethod());
+
         assertEquals(payment1.getStatus(), paymentResponses.getContent().get(0).getStatus());
         assertEquals(payment2.getStatus(), paymentResponses.getContent().get(1).getStatus());
     }

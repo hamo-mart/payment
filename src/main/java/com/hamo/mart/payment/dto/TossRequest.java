@@ -1,8 +1,5 @@
 package com.hamo.mart.payment.dto;
 
-import com.hamo.mart.payment.domain.Method;
-import com.hamo.mart.payment.domain.Status;
-import com.hamo.mart.payment.domain.Type;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,10 +9,8 @@ import lombok.Setter;
 @AllArgsConstructor
 @Getter
 @Setter
-public class PaymentRegisterRequest {
-    private String strategy;
-    private Long providerId;
-    private String orderNumber;
+public class TossRequest {
+
     private String paymentKey;
     private String orderId;
     private Integer amount;
