@@ -4,10 +4,11 @@ import com.hamo.mart.payment.dto.PaymentRegisterRequest;
 import com.hamo.mart.payment.dto.PaymentResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import reactor.core.publisher.Mono;
 
 public interface PaymentService {
 
-    PaymentResponse processPayment(PaymentRegisterRequest request);
+    Mono<PaymentResponse> processPayment(PaymentRegisterRequest request);
 
     PaymentResponse getPaymentDetails(Long paymentId);
 
