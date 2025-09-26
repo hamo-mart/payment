@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: category
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: category
+  template:
+    metadata:
+      labels:
+        app: category
+    spec:
+      containers:
+        - name: category
+          image: your-dockerhub-id/category:latest
+          ports:
+            - containerPort: 8095
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: category
+spec:
+  selector:
+    app: category
+  ports:
+    - protocol: TCP
+      port: 8095
+      targetPort: 8095
+  type: ClusterIP
